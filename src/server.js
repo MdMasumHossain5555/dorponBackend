@@ -4,6 +4,7 @@ const env = require("./config/env");
 
 connectDB();
 
+
 app.listen(env.port, () => {
   console.log(`Example app listening on port ${env.port}`);
 });
