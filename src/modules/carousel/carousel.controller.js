@@ -7,7 +7,7 @@ exports.getCarousel = async (req, res) => {
 
 exports.addCarousel = async (req, res) => {
   const { image } = req.body;
-  const product = new Product({ image });
-  await product.save();
-  res.status(201).json(product);
+  const carousel = new Carousel({ image });
+  await carousel.save();
+  res.status(201).json(carousel);
 };

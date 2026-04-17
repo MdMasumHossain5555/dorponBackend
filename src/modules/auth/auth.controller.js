@@ -97,6 +97,85 @@ exports.getUserProfile = [
   },
 ];
 
+exports.getUsers = [
+  protect,
+  async (req, res) => {
+    try {
+      if (!req.user.isAdmin) {
+        return res.status(403).json({ message: "Not authorized as an admin" });
+      }
+
+      const users = await User.find().select("-password");
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to load users" });
+    }
+  },
+];
+
+exports.deleteUser = [
+  protect,
+  async (req, res) => {
+    try {
+      if (!req.user.isAdmin) {
+        return res.status(403).json({ message: "Not authorized as an admin" });
+      }
+
+      const user = await User.findByIdAndDelete(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  },
+];
+
+exports.updateUserByAdmin = [
+  protect,
+  async (req, res) => {
+    try {
+      if (!req.user.isAdmin) {
+        return res.status(403).json({ message: "Not authorized as an admin" });
+      }
+
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { first_name, last_name, email, number, address, isAdmin } = req.body;
+
+      user.first_name = first_name ?? user.first_name;
+      user.last_name = last_name ?? user.last_name;
+      user.email = email ?? user.email;
+      user.number = number ?? user.number;
+      user.address = address ?? user.address;
+      if (typeof isAdmin === "boolean") {
+        user.isAdmin = isAdmin;
+      }
+
+      const updatedUser = await user.save();
+      res.json({
+        _id: updatedUser._id,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        email: updatedUser.email,
+        number: updatedUser.number,
+        address: updatedUser.address || "",
+        isAdmin: updatedUser.isAdmin,
+      });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  },
+];
+
 exports.logoutUser = async (req, res) => {
   res.cookie("token", "", {
     httpOnly: true,

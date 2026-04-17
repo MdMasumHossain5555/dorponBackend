@@ -7,7 +7,17 @@ exports.getProducts = async (req, res) => {
 };
 
 exports.addProducts = async (req, res) => {
-  const { name, sku, price, description, category } = req.body;
+  const {
+    name,
+    sku,
+    slug,
+    price,
+    oldPrice,
+    description,
+    category,
+    reviews,
+    rating,
+  } = req.body;
   const features = parseArrayField(req.body.features);
   const colors = parseArrayField(req.body.colors);
   const imageFiles = Array.isArray(req.files) ? req.files : [];
@@ -32,12 +42,14 @@ exports.addProducts = async (req, res) => {
 
   const product = new Product({
     name,
-    sku: sku || "fdsfd",
+    sku: sku || "",
+    slug: slug || "",
     price,
+    oldPrice,
     images,
     description,
-    reviews: 0,
-    rating: 0,
+    reviews: Number.isNaN(Number(reviews)) ? 0 : Number(reviews),
+    rating: Number.isNaN(Number(rating)) ? 0 : Number(rating),
     category,
     features,
     colors,
@@ -56,17 +68,28 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+exports.deleteProduct = async (req, res) => {
+  const product = await Product.findByIdAndDelete(req.params.id);
+  if (product) {
+    res.json({ message: "Product deleted successfully" });
+  } else {
+    res.status(404).json({ message: "Product not found" });
+  }
+};
+
 exports.updateProduct = async (req, res) => {
-  const { name, price, description, category, rating, sku } = req.body;
+  const { name, price, oldPrice, description, category, rating, sku, slug } = req.body;
   const product = await Product.findById(req.params.id);
 
   if (product) {
     product.name = name || product.name;
     product.price = price || product.price;
+    product.oldPrice = oldPrice || product.oldPrice;
     product.description = description || product.description;
     product.category = category || product.category;
     product.rating = rating || product.rating;
     product.sku = sku || product.sku;
+    product.slug = slug || product.slug;
 
     if (req.body.features !== undefined) {
       product.features = parseArrayField(req.body.features);
