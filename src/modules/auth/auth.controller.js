@@ -3,7 +3,7 @@ const User = require("./user.model");
 const generateToken = require("../../utils/generate-token");
 
 exports.registerUser = async (req, res) => {
-  const { first_name, last_name, email, number, password } = req.body;
+  const { first_name, last_name, email, number, password, address } = req.body;
 
   const userExists = await User.findOne({ email });
   if (userExists) return res.status(400).json({ message: "User already exists" });
@@ -13,6 +13,7 @@ exports.registerUser = async (req, res) => {
     last_name,
     email,
     number,
+    address,
     password,
     cart: [],
   });
@@ -54,6 +55,31 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+exports.getMe = [
+  protect,
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.user._id).select("-password");
+      if (user) {
+        res.json({
+          _id: user._id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          number: user.number,
+          address: user.address || "",
+          isAdmin: user.isAdmin || false,
+        });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      res.status(401).json({ message: "Not authorized, token failed" });
+    }
+  },
+];
+
 exports.getUserProfile = [
   protect,
   async (req, res) => {
@@ -83,13 +109,14 @@ exports.logoutUser = async (req, res) => {
 };
 
 exports.updateUserProfile = async (req, res) => {
-  const { first_name, last_name, email, number } = req.body;
+  const { first_name, last_name, email, number, address } = req.body;
   const user = await User.findById(req.user._id);
   if (user) {
     user.first_name = first_name || user.first_name;
     user.last_name = last_name || user.last_name;
     user.email = email || user.email;
     user.number = number || user.number;
+    user.address = address !== undefined ? address : user.address;
     const updatedUser = await user.save();
     res.json({
       _id: updatedUser._id,
@@ -97,6 +124,7 @@ exports.updateUserProfile = async (req, res) => {
       last_name: updatedUser.last_name,
       email: updatedUser.email,
       number: updatedUser.number,
+      address: updatedUser.address || "",
     });
   } else {
     res.status(404).json({ message: "User not found" });

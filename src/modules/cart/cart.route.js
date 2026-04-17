@@ -12,6 +12,7 @@ const router = express.Router();
 router.get("/", protect, getCartByUserId);
 router.post("/", protect, addToCart);
 router.delete("/", protect, removeFromCart);
+router.delete("/:productId", protect, removeFromCart);
 router.put("/", protect, updateCart);
 
 module.exports = router;
